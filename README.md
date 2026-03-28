@@ -1,16 +1,139 @@
-# React + Vite
+# 🤖 GYANI AI Assistant (JARVIS Style)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+![React](https://img.shields.io/badge/Frontend-React-blue)
+![Node](https://img.shields.io/badge/Backend-Node.js-green)
+![Ollama](https://img.shields.io/badge/AI-Ollama-orange)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
-Currently, two official plugins are available:
+A **fully local AI assistant** built using React and Ollama that provides real-time chat, voice interaction, system automation, and image generation — all running on your machine without relying on external cloud APIs.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## 🚀 Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+* 🧠 Local AI Chat using Ollama
+* ⚡ Real-time streaming responses
+* 🎤 Voice input (Speech-to-Text)
+* 🔊 Voice output (Text-to-Speech)
+* 🖥️ System commands (open apps like Chrome, VS Code, Excel)
+* 🖼️ AI Image Generation
+* 📊 Performance monitoring (response time, token speed)
+* 💻 Terminal-style futuristic UI
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🧠 Architecture
+
+React Frontend
+⬇
+Command Handler
+⬇
+├── Ollama (Local LLM)
+└── Node Server (System Commands + Image Generation)
+
+---
+
+## 📸 Demo
+
+*Add screenshots here*
+
+```
+screenshots/chat.png
+screenshots/image.png
+```
+
+---
+
+## ⚙️ Installation & Setup
+
+### 1️⃣ Clone the repository
+
+```bash
+git clone https://github.com/SaiSantanu/GYANI-ai-assistant.git
+cd GYANI-ai-assistant
+```
+
+---
+
+### 2️⃣ Install dependencies
+
+```bash
+npm install
+cd server
+npm install
+```
+
+---
+
+### 3️⃣ Setup environment variables
+
+Create a `.env` file inside `server/`:
+
+```env
+HF_TOKEN=your_token_here
+PORT=3001
+```
+
+---
+
+### 4️⃣ Run Ollama
+
+```bash
+ollama run llama3.2:1b
+```
+
+---
+
+### 5️⃣ Start backend
+
+```bash
+cd server
+node Server.js
+```
+
+---
+
+### 6️⃣ Start frontend
+
+```bash
+npm run dev
+```
+
+---
+
+## 🧪 Example Commands
+
+```
+open chrome
+open vscode
+open excel
+generate image of robot
+what is the time
+```
+
+---
+
+## 🔐 Privacy First
+
+* Runs completely locally
+* No external API required (except optional image generation)
+* No data leaves your system
+
+---
+
+## 🚀 Future Improvements
+
+* Wake word detection ("Hey Jarvis")
+* Smart model switching
+* Offline speech recognition
+* Performance optimization modes
+
+---
+
+## 👨‍💻 Author
+
+**Sai Santanu**
+
+---
+
+⭐ If you like this project, consider giving it a star!
