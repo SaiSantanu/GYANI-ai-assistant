@@ -18,9 +18,16 @@ export default function Chatbot() {
   const chatEndRef = useRef(null);
   const greetedRef = useRef(false);
   const messagesRef = useRef([]);
+  const csrfToken = useRef("");
 
   useEffect(() => { messagesRef.current = messages; }, [messages]);
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+  useEffect(() => {
+    fetch("http://localhost:3001/csrf-token")
+      .then(r => r.json())
+      .then(d => { csrfToken.current = d.csrfToken; })
+      .catch(() => {});
+  }, []);
   useEffect(() => {
     if (greetedRef.current) return;
     greetedRef.current = true;
@@ -28,9 +35,8 @@ export default function Chatbot() {
   }, []);
 
   function speak(text) {
-    if (typeof text !== "string") return;
-    const trimmed = text.length > 300 ? text.slice(0, 300) + "..." : text;
-    const speech = new SpeechSynthesisUtterance(trimmed);
+    if (typeof text !== "string" || !text.trim()) return;
+    const speech = new SpeechSynthesisUtterance(text.trim());
     speech.lang = "en-US";
     speech.rate = 1;
     window.speechSynthesis.speak(speech);
@@ -40,7 +46,7 @@ export default function Chatbot() {
     try {
       const res = await fetch("http://localhost:3001/launch", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-csrf-token": csrfToken.current },
         body: JSON.stringify({ app: appName })
       });
       const data = await res.json();
@@ -54,7 +60,7 @@ export default function Chatbot() {
     try {
       const response = await fetch("http://localhost:3001/generate-image", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-csrf-token": csrfToken.current },
         body: JSON.stringify({ prompt })
       });
       if (!response.ok) {
@@ -208,7 +214,7 @@ export default function Chatbot() {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
-      let aiText = "", buffer = "", tokenCount = 0;
+      let aiText = "", buffer = "", tokenCount = 0, speakBuffer = "";
 
       setMessages(prev => [...prev, { role: "assistant", content: "", time: getTimestamp() }]);
 
@@ -224,20 +230,29 @@ export default function Chatbot() {
             const parsed = JSON.parse(line);
             const chunk = parsed.message?.content || "";
             aiText += chunk;
+            speakBuffer += chunk;
             tokenCount += chunk.split(" ").length;
             setMessages(prev => {
               const updated = [...prev];
               updated[updated.length - 1] = { ...updated[updated.length - 1], content: aiText };
               return updated;
             });
+            if (fromVoice) {
+              const sentenceMatch = speakBuffer.match(/^(.+[.!?])\s*/);
+              if (sentenceMatch) {
+                speak(sentenceMatch[1]);
+                speakBuffer = speakBuffer.slice(sentenceMatch[0].length);
+              }
+            }
           } catch (err) { console.error("Stream parse error:", err); }
         }
       }
 
+      if (fromVoice && speakBuffer.trim()) speak(speakBuffer.trim());
+
       const seconds = (Date.now() - startTime) / 1000;
       setResponseTime(seconds.toFixed(2));
       setTokenSpeed((tokenCount / seconds).toFixed(2));
-      if (fromVoice) speak(aiText);
 
     } catch (err) {
       setMessages(prev => [...prev, { role: "assistant", content: `[ERROR] ${err.message}`, time: getTimestamp(), error: true }]);

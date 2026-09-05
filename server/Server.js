@@ -1,11 +1,24 @@
+require("dotenv").config();
 const express = require("express");
 const { exec } = require("child_process");
 const cors = require("cors");
 const fetch = require("node-fetch");
+const crypto = require("crypto");
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: process.env.ALLOWED_ORIGIN || "http://localhost:5173" }));
 app.use(express.json());
+
+// ── CSRF token ────────────────────────────────────────────────
+const CSRF_TOKEN = crypto.randomBytes(32).toString("hex");
+
+app.get("/csrf-token", (_, res) => res.json({ csrfToken: CSRF_TOKEN }));
+
+function verifyCsrf(req, res, next) {
+  if (req.headers["x-csrf-token"] !== CSRF_TOKEN)
+    return res.status(403).json({ error: "Invalid CSRF token." });
+  next();
+}
 
 // ── Detect OS ─────────────────────────────────────────────────
 const isWindows = process.platform === "win32";
@@ -100,7 +113,7 @@ const APP_COMMANDS = {
 };
 
 // ── Launch endpoint ───────────────────────────────────────────
-app.post("/launch", (req, res) => {
+app.post("/launch", verifyCsrf, (req, res) => {
   const { app: appName } = req.body;
 
   if (!appName) {
@@ -130,10 +143,9 @@ app.post("/launch", (req, res) => {
   });
 });
 
-
-
-app.post("/generate-image", async (req, res) => {
-  const { prompt } = req.body;
+// ── Image generation endpoint ─────────────────────────────────
+app.post("/generate-image", verifyCsrf, async (req, res) => {
+  const prompt = String(req.body?.prompt || "").trim().slice(0, 500);
 
   if (!prompt) {
     return res.status(400).json({ error: "No prompt provided." });
@@ -145,7 +157,7 @@ app.post("/generate-image", async (req, res) => {
       {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${HF_TOKEN}`,
+          "Authorization": `Bearer ${process.env.HF_TOKEN}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({ inputs: prompt })
