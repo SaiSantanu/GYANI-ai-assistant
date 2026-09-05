@@ -153,14 +153,14 @@ app.post("/generate-image", verifyCsrf, async (req, res) => {
 
   try {
     const response = await fetch(
-      "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0",
+      "https://router.huggingface.co/fal-ai/fal-ai/flux/schnell",
       {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${process.env.HF_TOKEN}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ inputs: prompt })
+        body: JSON.stringify({ prompt })
       }
     );
 
@@ -169,9 +169,14 @@ app.post("/generate-image", verifyCsrf, async (req, res) => {
       return res.status(response.status).json({ error: err.error || "HF API error" });
     }
 
-    const buffer = await response.buffer();
+    const data = await response.json();
+    const imageUrl = data?.images?.[0]?.url;
+    if (!imageUrl) return res.status(500).json({ error: "No image returned" });
+
+    const imgRes = await fetch(imageUrl);
+    const buffer = await imgRes.buffer();
     const base64 = buffer.toString("base64");
-    res.json({ image: `data:image/png;base64,${base64}` });
+    res.json({ image: `data:image/jpeg;base64,${base64}` });
 
   } catch (err) {
     res.status(500).json({ error: err.message });

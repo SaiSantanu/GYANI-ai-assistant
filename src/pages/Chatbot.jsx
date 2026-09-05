@@ -22,12 +22,15 @@ export default function Chatbot() {
 
   useEffect(() => { messagesRef.current = messages; }, [messages]);
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
-  useEffect(() => {
-    fetch("http://localhost:3001/csrf-token")
-      .then(r => r.json())
-      .then(d => { csrfToken.current = d.csrfToken; })
-      .catch(() => {});
-  }, []);
+  async function getCsrfToken() {
+    if (csrfToken.current) return csrfToken.current;
+    try {
+      const r = await fetch("http://localhost:3001/csrf-token");
+      const d = await r.json();
+      csrfToken.current = d.csrfToken;
+      return csrfToken.current;
+    } catch { return ""; }
+  }
   useEffect(() => {
     if (greetedRef.current) return;
     greetedRef.current = true;
@@ -44,9 +47,10 @@ export default function Chatbot() {
 
   async function launchApp(appName) {
     try {
+      const token = await getCsrfToken();
       const res = await fetch("http://localhost:3001/launch", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-csrf-token": csrfToken.current },
+        headers: { "Content-Type": "application/json", "x-csrf-token": token },
         body: JSON.stringify({ app: appName })
       });
       const data = await res.json();
@@ -58,9 +62,10 @@ export default function Chatbot() {
 
   async function generateImage(prompt) {
     try {
+      const token = await getCsrfToken();
       const response = await fetch("http://localhost:3001/generate-image", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-csrf-token": csrfToken.current },
+        headers: { "Content-Type": "application/json", "x-csrf-token": token },
         body: JSON.stringify({ prompt })
       });
       if (!response.ok) {
