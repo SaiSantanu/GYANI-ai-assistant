@@ -25,7 +25,7 @@ export default function Chatbot() {
   async function getCsrfToken() {
     if (csrfToken.current) return csrfToken.current;
     try {
-      const r = await fetch("http://localhost:3001/csrf-token");
+      const r = await fetch("/csrf-token");
       const d = await r.json();
       csrfToken.current = d.csrfToken;
       return csrfToken.current;
@@ -48,7 +48,7 @@ export default function Chatbot() {
   async function launchApp(appName) {
     try {
       const token = await getCsrfToken();
-      const res = await fetch("http://localhost:3001/launch", {
+      const res = await fetch("/launch", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-csrf-token": token },
         body: JSON.stringify({ app: appName })
@@ -63,7 +63,7 @@ export default function Chatbot() {
   async function generateImage(prompt) {
     try {
       const token = await getCsrfToken();
-      const response = await fetch("http://localhost:3001/generate-image", {
+      const response = await fetch("/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-csrf-token": token },
         body: JSON.stringify({ prompt })
@@ -72,6 +72,7 @@ export default function Chatbot() {
         const err = await response.json().catch(() => ({}));
         throw new Error(err.error || `HTTP ${response.status}`);
       }
+
       const data = await response.json();
       return data.image ?? null;
     } catch (err) {
@@ -204,7 +205,7 @@ export default function Chatbot() {
     setIsStreaming(true);
 
     try {
-      const response = await fetch("http://13.233.163.18:3001/api/chat", {
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
