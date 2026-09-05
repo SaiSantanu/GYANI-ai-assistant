@@ -204,7 +204,7 @@ export default function Chatbot() {
     setIsStreaming(true);
 
     try {
-      const response = await fetch("http://localhost:11434/api/chat", {
+      const response = await fetch("http://13.233.163.18:3001/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -216,6 +216,13 @@ export default function Chatbot() {
           stream: true
         })
       });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status} ${response.statusText}`);
+      }
+      if (!response.body) {
+        throw new Error("No response body received from server.");
+      }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
@@ -234,6 +241,7 @@ export default function Chatbot() {
           try {
             const parsed = JSON.parse(line);
             const chunk = parsed.message?.content || "";
+            if (!chunk) continue;
             aiText += chunk;
             speakBuffer += chunk;
             tokenCount += chunk.split(" ").length;
@@ -251,6 +259,22 @@ export default function Chatbot() {
             }
           } catch (err) { console.error("Stream parse error:", err); }
         }
+      }
+
+      // handle any remaining buffered chunk after stream ends
+      if (buffer.trim()) {
+        try {
+          const parsed = JSON.parse(buffer);
+          const chunk = parsed.message?.content || "";
+          if (chunk) {
+            aiText += chunk;
+            setMessages(prev => {
+              const updated = [...prev];
+              updated[updated.length - 1] = { ...updated[updated.length - 1], content: aiText };
+              return updated;
+            });
+          }
+        } catch (_) {}
       }
 
       if (fromVoice && speakBuffer.trim()) speak(speakBuffer.trim());
